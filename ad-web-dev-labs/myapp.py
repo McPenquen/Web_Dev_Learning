@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, abort, request
+from flask import Flask, redirect, url_for, abort, request, render_template
 import time
 app = Flask(__name__)
 
@@ -10,21 +10,20 @@ def root():
 
 @app.route('/welcome')
 def welcome():
-    start = '<img src="'
-    url = url_for('static', filename='warrior.png')
-    end = '">'
-    return '<h3>Welcome warrior...</h3><br>'+start+url+end, 200
+    return render_template('welcome.html'), 200
 
+@app.route('/profile')
 @app.route('/profile/<name>')
-def profile(name):
-    return "<h3>Name: %s <br>Age: 22<br> Class: Warrior</h3>" % name
+def profile(name=None):
+    user = {'name' : name}
+    return render_template('profile-page.html', user=user)
 
 @app.route('/profile/picture', methods=['POST', 'GET'])
 def picture():
     if request.method == 'POST':
         f = request.files['datafile']
         f.save('static/profile.jpg')
-        return '<img src="'+ url_for('static', filename='profile.jpg') +'">' 
+        return '<h3>Your profile picture changed to:</h3><br><img src="'+ url_for('static', filename='profile.jpg') +'">' 
     else:
         pic = '<img src="'+ url_for('static', filename='profile.jpg') +'">' 
         page = ''' 
@@ -39,7 +38,8 @@ def picture():
 
 @app.route('/village')
 def village():
-    return 'Here is the village Somewood'
+    places = ['smith', 'soldier', 'wizard']
+    return render_template('village.html', places=places)
 
 @app.route('/village/soldier', methods=['GET','POST'])
 def soldier():
