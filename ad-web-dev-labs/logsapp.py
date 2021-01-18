@@ -1,35 +1,53 @@
-import sqlite3
+import configparser
+import logging
 
-from flask import Flask, g, redirect, url_for, abort, request, render_template, session, flash
+from flask import Flask, redirect, url_for, abort, request, render_template, session, flash
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 app.secret_key = 'WOWO/4141/POPO/2121'
-db_location = 'var/sqlite.db'
 
-def get_db():
-    db = getattr(g, 'db', None)
-    if db is None:
-        db = sqlite3.connect(db_location)
-        g.db = db
-    return db
+def init(app):
+    config = configparser.ConfigParser()
+    try:
+        config_location = "etc/defaults.cfg"
+        config.read(config_location)
 
-@app.teardown_appcontext
-def close_db_connection(exception):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.close()
+        app.config['DEBUG'] = config.get("config", "debug")
+        app.config['ip_address'] = config.get("config", "ip_address")
+        app.config['port'] = config.get("config", "port")
+        app.config['url'] = config.get("config", "url")
 
-def init_db():
-    with app.app_context():
-        db= get_db()
-        with app.open_resource('schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
+        app.config['log_file'] = config.get("logging", "name")
+        app.config['log_location'] = config.get("logging", "location")
+        app.config['log_level'] = config.get("logging", "level")
+    except:
+        print("Couldn't read configs from: ", config_location)
+
+def logs(app):
+    log_pathname = app.config['log_location'] + app.config['log_file']
+    file_handler = RotatingFileHandler(log_pathname, maxBytes=1024*1024*10, backupCount=1024)
+    file_handler.setLevel(app.config['log_level'])
+    formatter = logging.Formatter("%(levelname)s | %(asctime)s | %(module)s | %(funcName)s | %(mesage)s")
+    file_handler.setFormatter(formatter)
+    app.logger.setLevel(app.config["log_level"])
+    app.logger.addHandler(file_handler)
+
+init(app)
+logs(app)
 
 @app.route('/')
 def root():
     return redirect(url_for('welcome'))
+
+@app.route('/config')
+def config():
+    s = []
+    s.append('debug: ' + str(app.config['DEBUG']))
+    s.append('port: ' + str(app.config['port']))
+    s.append('url: ' + str(app.config['url']))
+    s.append('ip_address: ' + str(app.config['ip_address']))
+    return ', '.join(s)
 
 @app.route('/bootstrap')
 def bootstrap():
@@ -82,23 +100,6 @@ def picture():
         </body><html>
         '''
         return pic + page, 200
-
-@app.route('/monsters')
-def monsters():
-    db = get_db()
-    db.cursor().execute('insert into monsters values ("Ghoblin", "Earth", 120, 20)')
-    db.commit()
-
-    page = []
-    page.append('<html><ul>')
-    sql = "SELECT * FROM monsters ORDER BY name"
-    for row in db.cursor().execute(sql):
-        page.append('<li>')
-        page.append(str(row))
-        page.append('</li>')
-
-    page.append('</ul></html>')
-    return ''.join(page)
 
 @app.route('/village')
 def village():
@@ -172,8 +173,9 @@ def page_not_found():
     return "Couldn't find the page requested.", 404 
 
 if __name__ == '__main__':
+    init(app)
     app.run(
-        host = '0.0.0.0',
-        port = 5000,
+        host = app.config['ip_address'],
+        port = app.config['port'],
         debug = True
     )
