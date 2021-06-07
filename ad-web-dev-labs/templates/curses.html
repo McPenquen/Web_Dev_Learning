@@ -1,0 +1,14 @@
+<html>
+    <h1>
+        Your curses:
+    </h1>
+    <body>
+        {% with curses = get_flashed_messages() %}
+            {% if curses %}
+                {% for curse in curses %}
+                    <li>{{curse | safe }}</li>
+                {% endfor %}
+            {% endif%}
+        {% endwith %}
+    </body>
+</html>

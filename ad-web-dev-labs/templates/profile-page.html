@@ -1,0 +1,14 @@
+<!doctype htlm>
+<head>
+    {% if user.name %}
+        <h3>
+        Name: {{user.name}} <br>
+        Age: 22 <br> 
+        Class: Warrior <br>
+        </h3>
+    {% else %}
+        <h3>Select profile name to display profile...</h3>
+    {% endif %}
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet"/>
+</head>
+</html>
