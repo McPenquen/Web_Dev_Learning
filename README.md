@@ -22,6 +22,8 @@ deactivate
 'where python' - check the location of the virtual env
 'deactivate' - close the virtual env
 
+virtualenv env --python=python3.8 *Taylor's tip*
+
 # Requests
 'curl -i -X POST http://127.0.0.1:5000/.../..' - post to the route .../..
 
